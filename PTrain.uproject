@@ -1,0 +1,35 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "4.26",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "PTrain",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "GoogleVRHMD",
+			"Enabled": true
+		},
+		{
+			"Name": "GoogleVRController",
+			"Enabled": true
+		}
+	],
+	"TargetPlatforms": [
+		"Mac",
+		"Linux",
+		"Windows",
+		"WindowsNoEditor",
+		"MacNoEditor",
+		"LinuxNoEditor",
+		"LinuxAArch64NoEditor"
+	]
+}
