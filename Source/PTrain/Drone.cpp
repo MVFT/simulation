@@ -56,9 +56,14 @@ FVector ADrone::TorqueBackLeft(FVector inThrust)
 FVector ADrone::TorqueBackRight(FVector inThrust)
 {
 	return FVector::CrossProduct(BackRightMotorPos, inThrust) * ForceScaleFactor;
-
 }
 
+
+
+FVector ADrone::TotalSpin(FVector FL, FVector FR, FVector BL, FVector BR) {
+	constexpr float b = 1.0f;	// b is a constant we can make up later (we will get it from Propulsion)
+	return b * (FL + BR - FR - BL) * ForceScaleFactor;
+}
 
 
 // Called every frame
@@ -82,6 +87,10 @@ void ADrone::Tick(float DeltaTime)
 		collision->AddTorque(TorqueFrontRight(FRThrust));
 		collision->AddTorque(TorqueBackLeft(BLThrust));
 		collision->AddTorque(TorqueBackRight(BRThrust));
+
+		// motor spin torques
+		collision->AddTorque(TotalSpin(FLThrust, FRThrust, BLThrust, BRThrust));
+	
 	}
 	else {
 		// behave like an airplane
@@ -106,6 +115,8 @@ void ADrone::Tick(float DeltaTime)
 	dragVec = drag * (-GetActorForwardVector());	// negative x is forward
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), drag);
 	collision->AddForce(dragVec);
+
+	// TODO: Lift
 
 }
 

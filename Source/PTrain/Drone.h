@@ -39,6 +39,8 @@ protected:
 	FVector TorqueFrontRight(FVector);
 	FVector TorqueBackLeft(FVector);
 	FVector TorqueBackRight(FVector);
+	FVector TotalSpin(FVector, FVector, FVector, FVector);
+
 
 
 public:	
