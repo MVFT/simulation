@@ -71,40 +71,60 @@ void ADrone::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	auto localVelVec = UKismetMathLibrary::InverseTransformDirection(GetTransform(), GetVelocity());
+	auto forwardVel = -localVelVec.X;
+
+	auto FRThrust = ThrustFrontRight(power);
+	auto FLThrust = ThrustFrontLeft(power);
+
 	if (isHovering) {
 		// motor thrust
-		auto FRThrust = GetActorUpVector() * ThrustFrontRight(power);
-		auto FLThrust = GetActorUpVector() * ThrustFrontLeft(power);
+		
 		auto BLThrust = GetActorUpVector() * ThrustBackLeft(power);
 		auto BRThrust = GetActorUpVector() * ThrustBackRight(power);
-		collision->AddForce(FRThrust);
-		collision->AddForce(FLThrust);
+
+		collision->AddForce(GetActorUpVector() * FRThrust);
+		collision->AddForce(GetActorUpVector() * FLThrust);
 		collision->AddForce(BLThrust);
 		collision->AddForce(BRThrust);
 
 		// motor torques
-		collision->AddTorque(TorqueFrontLeft(FLThrust));
-		collision->AddTorque(TorqueFrontRight(FRThrust));
+		collision->AddTorque(TorqueFrontLeft(GetActorUpVector() * FLThrust));
+		collision->AddTorque(TorqueFrontRight(GetActorUpVector() * FRThrust));
 		collision->AddTorque(TorqueBackLeft(BLThrust));
 		collision->AddTorque(TorqueBackRight(BRThrust));
 
 		// motor spin torques
-		collision->AddTorque(TotalSpin(FLThrust, FRThrust, BLThrust, BRThrust));
+		collision->AddTorque(TotalSpin(GetActorUpVector() * FLThrust, GetActorUpVector() * FRThrust, BLThrust, BRThrust));
 	
 	}
 	else {
-		// behave like an airplane
-		// power goes forward, and moveVec controls wings & rudder
-		auto forwardForce = -GetActorForwardVector() * ForceScaleFactor * power;
-		collision->AddForce(forwardForce);
+		// glide
+		auto FrontVec = -GetActorForwardVector();
+		collision->AddForce(FrontVec * FRThrust);
+		collision->AddForce(FrontVec * FLThrust);
 
-		// innacurate lift 
-		
-		auto liftVec = -localVelVec.X * GlideLift;	// positive X is pointing aft
-		collision->AddForce(FVector(0,0,liftVec));
+		// Ruddervators on V-tail
 
-		// even worse wing control
-	}
+		// aileron positions
+		float LAileronAngle = 0, RAileronAngle = 0;
+		LAileronAngle = MaxAileronAngle * (-currentBank + currentPitch) / 2;	// average
+		RAileronAngle = MaxAileronAngle * (currentBank + currentPitch) / 2;
+
+		// aileron roll torque
+		collision->AddTorque(UKismetMathLibrary::TransformDirection(GetTransform(), FVector(forwardVel * LAileronAngle * RollScaleFactor,0,0)));
+		collision->AddTorque(-UKismetMathLibrary::TransformDirection(GetTransform(), FVector(forwardVel * RAileronAngle * RollScaleFactor,0,0)));
+
+		// aileron pitch torque
+		collision->AddTorque(UKismetMathLibrary::TransformDirection(GetTransform(), FVector(0, forwardVel * LAileronAngle * RollScaleFactor, 0)));
+		collision->AddTorque(UKismetMathLibrary::TransformDirection(GetTransform(), FVector(0, forwardVel * RAileronAngle * RollScaleFactor, 0)));
+	}	
+
+	// Lift
+	auto normalizedUp = GetActorUpVector();
+	normalizedUp.Normalize();
+	auto cosTheta = FVector::DotProduct( normalizedUp,FVector(0, 0, 1));
+	forwardVel = UKismetMathLibrary::Abs(localVelVec.X);
+	collision->AddForce((cosTheta * forwardVel) * normalizedUp * LiftScaleFactor);
 
 	// Drag
 	auto drag = FVector::DotProduct(localVelVec, FVector(0.0f, 0.0f, 1.0f)) * WingResistance;

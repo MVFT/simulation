@@ -27,6 +27,8 @@ protected:
 	bool isHovering = true;	// begin in hover mode 
 
 	FVector startPos;
+	float currentBank = 0;
+	float currentPitch = 0;
 	
 	// thrust functions per motor
 	float ThrustFrontRight(float);
@@ -51,6 +53,12 @@ public:
 	void Forward(float amt);
 	void Right(float amt);
 	void RotateZ(float amt);
+	void SetBank(float amt) {	// see APilot::SetBank for amounts
+		currentBank = amt;
+	}
+	void SetPitch(float amt) {
+		currentPitch = amt;
+	}
 	void Switch() {
 		isHovering = !isHovering;
 	}
@@ -87,4 +95,19 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aircraft Parameters")
 		float WingResistance = 10;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aircraft Parameters")
+		float LiftScaleFactor = 100;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aircraft Parameters")
+		FVector RuddervatorAnglesDegrees = FVector(45,0,0);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aircraft Parameters")
+		float RuddervatorScaleFactor = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aircraft Parameters")
+		float MaxAileronAngle = 45;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aircraft Parameters")
+		float RollScaleFactor = 20;
 };

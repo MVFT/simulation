@@ -57,6 +57,8 @@ void APilot::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAxis("Forward", this, &APilot::Forward);
 	PlayerInputComponent->BindAxis("Right", this, &APilot::Right);
 	PlayerInputComponent->BindAxis("RotateZ", this, &APilot::RotateZ);
+	PlayerInputComponent->BindAxis("Bank", this, &APilot::SetBank);
+	PlayerInputComponent->BindAxis("Pitch", this, &APilot::SetPitch);
 	PlayerInputComponent->BindAction("SwitchMode", EInputEvent::IE_Pressed, this, &APilot::Switch);
 	PlayerInputComponent->BindAction("ResetPlane", EInputEvent::IE_Pressed, this, &APilot::ResetPlane);
 	PlayerInputComponent->BindAction("ToggleHMD", EInputEvent::IE_Pressed, this, &APilot::ToggleHMD);
@@ -84,6 +86,14 @@ void APilot::Switch() {
 
 void APilot::ResetPlane() {
 	Drone->Reset();
+}
+
+void APilot::SetBank(float amt) {
+	Drone->SetBank(amt);
+}
+
+void APilot::SetPitch(float amt) {
+	Drone->SetPitch(amt);
 }
 
 void APilot::ToggleHMD() {
