@@ -73,14 +73,22 @@ void ADrone::Tick(float DeltaTime)
 	auto localVelVec = UKismetMathLibrary::InverseTransformDirection(GetTransform(), GetVelocity());
 	auto forwardVel = -localVelVec.X;
 
-	auto FRThrust = ThrustFrontRight(power);
-	auto FLThrust = ThrustFrontLeft(power);
-
 	if (isHovering) {
-		// motor thrust
+
+		// control system for hover
+		//UE_LOG(LogTemp, Warning, TEXT("%f"), power);
+		float FLPower = power, FRPower = power, BLPower = power, BRPower = power;
 		
-		auto BLThrust = GetActorUpVector() * ThrustBackLeft(power);
-		auto BRThrust = GetActorUpVector() * ThrustBackRight(power);
+		FLPower += YawHoverScaleFactor * moveVec.Z;
+		FRPower -= YawHoverScaleFactor * moveVec.Z;
+		BRPower += YawHoverScaleFactor * moveVec.Z;
+		BLPower -= YawHoverScaleFactor * moveVec.Z;
+
+		// motor thrust
+		auto FRThrust = ThrustFrontRight(FRPower);
+		auto FLThrust = ThrustFrontLeft(FLPower);
+		auto BLThrust = GetActorUpVector() * ThrustBackLeft(BLPower);
+		auto BRThrust = GetActorUpVector() * ThrustBackRight(BRPower);
 
 		collision->AddForce(GetActorUpVector() * FRThrust);
 		collision->AddForce(GetActorUpVector() * FLThrust);
@@ -99,24 +107,34 @@ void ADrone::Tick(float DeltaTime)
 	}
 	else {
 		// glide
+
+		auto FRThrust = ThrustFrontRight(power);
+		auto FLThrust = ThrustFrontLeft(power);
+
 		auto FrontVec = -GetActorForwardVector();
 		collision->AddForce(FrontVec * FRThrust);
 		collision->AddForce(FrontVec * FLThrust);
 
+		// Ruddervator positions
+		float LRVAngle = MaxRuddervatorAngle * (currentYaw + currentPitch) / 2, 
+			RRVAngle = MaxRuddervatorAngle * (currentYaw + currentPitch) / 2;
+
 		// Ruddervators on V-tail
+		//collision->AddTorque(UKismetMathLibrary::TransformDirection(GetTransform(), FVector(forwardVel * LRVAngle * RollScaleFactor, 0, 0)));
+		//collision->AddTorque(-UKismetMathLibrary::TransformDirection(GetTransform(), FVector(forwardVel * RRVAngle * RollScaleFactor, 0, 0)));
 
 		// aileron positions
 		float LAileronAngle = 0, RAileronAngle = 0;
-		LAileronAngle = MaxAileronAngle * (-currentBank + currentPitch) / 2;	// average
-		RAileronAngle = MaxAileronAngle * (currentBank + currentPitch) / 2;
+		LAileronAngle = MaxAileronAngle * -currentBank;	
+		RAileronAngle = MaxAileronAngle * currentBank;
 
 		// aileron roll torque
 		collision->AddTorque(UKismetMathLibrary::TransformDirection(GetTransform(), FVector(forwardVel * LAileronAngle * RollScaleFactor,0,0)));
 		collision->AddTorque(-UKismetMathLibrary::TransformDirection(GetTransform(), FVector(forwardVel * RAileronAngle * RollScaleFactor,0,0)));
 
 		// aileron pitch torque
-		collision->AddTorque(UKismetMathLibrary::TransformDirection(GetTransform(), FVector(0, forwardVel * LAileronAngle * RollScaleFactor, 0)));
-		collision->AddTorque(UKismetMathLibrary::TransformDirection(GetTransform(), FVector(0, forwardVel * RAileronAngle * RollScaleFactor, 0)));
+		//collision->AddTorque(UKismetMathLibrary::TransformDirection(GetTransform(), FVector(0, forwardVel * LAileronAngle * RollScaleFactor, 0)));
+		//collision->AddTorque(UKismetMathLibrary::TransformDirection(GetTransform(), FVector(0, forwardVel * RAileronAngle * RollScaleFactor, 0)));
 	}	
 
 	// Lift
@@ -126,17 +144,19 @@ void ADrone::Tick(float DeltaTime)
 	forwardVel = UKismetMathLibrary::Abs(localVelVec.X);
 	collision->AddForce((cosTheta * forwardVel) * normalizedUp * LiftScaleFactor);
 
-	// Drag
+	// Drag - perpendicular
 	auto drag = FVector::DotProduct(localVelVec, FVector(0.0f, 0.0f, 1.0f)) * WingResistance;
 	auto dragVec = drag * (-GetActorUpVector());
 	collision->AddForce(dragVec);
 	
-	drag = FVector::DotProduct(localVelVec, FVector(1.0f, 0.0f, 0.0f)) * WingResistance;
+	// drag - parallel
+	drag = FVector::DotProduct(localVelVec, FVector(1.0f, 0.0f, 0.0f)) * ForwardResistance;
 	dragVec = drag * (-GetActorForwardVector());	// negative x is forward
 	//UE_LOG(LogTemp, Warning, TEXT("%f"), drag);
 	collision->AddForce(dragVec);
 
-	// TODO: Lift
+	// angular drag - yaw
+	collision->AddTorque(-collision->GetPhysicsAngularVelocityInRadians() * AngularDrag * ForceScaleFactor);
 
 }
 
@@ -154,6 +174,7 @@ void ADrone::Right(float amt) {
 
 void ADrone::RotateZ(float amt) {
 	moveVec.Z = amt;
+	currentYaw = amt;	// slightly redundant...
 }
 
 void ADrone::Reset() {

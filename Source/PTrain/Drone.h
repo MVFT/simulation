@@ -29,6 +29,7 @@ protected:
 	FVector startPos;
 	float currentBank = 0;
 	float currentPitch = 0;
+	float currentYaw = 0;
 	
 	// thrust functions per motor
 	float ThrustFrontRight(float);
@@ -97,6 +98,9 @@ public:
 		float WingResistance = 10;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aircraft Parameters")
+		float ForwardResistance = 10;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aircraft Parameters")
 		float LiftScaleFactor = 100;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aircraft Parameters")
@@ -109,5 +113,17 @@ public:
 		float MaxAileronAngle = 45;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aircraft Parameters")
+		float MaxRuddervatorAngle = 25;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aircraft Parameters")
 		float RollScaleFactor = 20;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aircraft Parameters")
+		float YawHoverScaleFactor = 0.001;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aircraft Parameters")
+		float AngularDrag = 100;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Aircraft Parameters")
+		float RuddervatorAngle = 52.24;
 };
